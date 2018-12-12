@@ -1,0 +1,23 @@
+---
+
+# install web_package with yum
+# install ssl_package with yum
+# use with_items
+# only run if the server is a part of webservers group and system memory is greater than the amount defined in the 'memory'
+#
+- name: install packages {{web_package}} and {{ssl_package}}
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - "{{ web_package }}"
+    - "{{ ssl_package }}"
+  when: 
+    - inventory_hostname in groups['webservers']
+    - "(ansible_memory_mb.real.total) > (memory)"
+
+- name: start {{web_service}} service
+  service:
+    name: "{{web_service}}"
+    state: started
+    

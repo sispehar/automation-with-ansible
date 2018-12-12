@@ -1,0 +1,32 @@
+---
+- name: Main playbook doing stuff
+  hosts: lamp
+  vars:
+    - firewall: firewalld
+  
+  tasks:
+    - name: Include vars
+      include_vars: vars/main.yml
+    - name: Include my tasks
+      include: tasks/main.yml
+    - name: Install latest firewall
+      yum:
+        name: "{{firewall}}"
+        state: latest
+    - name: Start firewall
+      service:
+        name: "{{firewall}}"
+        state: started
+        enabled: true
+    - name: open the port for firewall
+      firewalld:
+        service: http
+        state: enabled
+        immediate: true
+        permanent: true
+
+    - name: create the index.html file
+      copy:
+        content: "{{ansible_fqdn}} ({{ansible_default_ipv4 }}) has been customized by Ansible"
+        dest: /var/www/html/index.html
+

@@ -1,0 +1,16 @@
+---
+- name: install web and db server
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - "{{ansible_local.custom.packages.web_package}}"
+    - "{{ansible_local.custom.packages.db_package}}"
+
+- name: start web and db server
+  service:
+    name: "{{ item }}"
+    state: started
+  with_items:
+    - "{{ansible_local.custom.services.web_service}}"
+    - "{{ansible_local.custom.services.db_service}}"

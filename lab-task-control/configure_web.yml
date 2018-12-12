@@ -1,0 +1,44 @@
+---
+
+- command: yum list installed httpd
+  register: httpd_installed
+  failed_when: httpd_installed.rc == 1
+  
+- block:
+  - get_url:
+      url: "{{https_uri}}"
+      dest: /etc/httpd/conf.d/
+  
+  - file:
+      state: directory
+      recurse: yes
+      mode: 0755
+      path: /etc/httpd/conf.d/ssl
+
+  - file:
+        state: directory
+        recurse: yes
+        mode: 0755
+        path: /var/www/html/logs
+  
+  - stat:
+      path: /etc/httpd/conf.d/ssl.conf
+    register: ssl_stat
+
+  - command: mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.bak
+    when: ssl_stat.stat.exists
+
+  - unarchive:
+      src: "{{ssl_uri}}"
+      dest: /etc/httpd/conf.d/ssl/
+      copy: no
+    notify:
+      - restart_services
+
+  - copy:
+      content: "{{ansible_hostname}} ({{ansible_default_ipv4.address}}) has been customized by Ansible\n"
+      dest: /var/www/html/index.html
+  when:
+    httpd_installed.rc == 0
+
+

@@ -1,0 +1,23 @@
+---
+- name: install {{fw_package}} package
+  yum:
+    name: "{{fw_package}}"
+    state: latest
+  tags: production
+
+- name: start the {{fw_service}} service
+  service:
+    name: "{{fw_service}}"
+    state: started
+  tags: production
+
+- name: add fw rules
+  firewalld:
+    service: "{{item}}"
+    immediate: true
+    permanent: true
+    state: enabled
+  with_items:
+    - https
+    - http
+  tags: production

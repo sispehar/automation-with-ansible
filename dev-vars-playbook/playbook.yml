@@ -1,0 +1,47 @@
+---
+- name: Deploy and start apache httpd service
+  hosts: webserver
+  vars:
+    web_pkg: httpd
+    firewall_pkg: firewalld
+    web_service: httpd
+    firewall_service: firewalld
+    python_pkg: python-httplib2
+    rule: http
+  tasks:
+    - name: Required packages are installed and up to date
+      yum:
+        name: [ "{{ web_pkg}}", "{{ firewall_pkg }}", "{{ python_pkg }}" ]
+        state: latest
+
+    - name: The {{ item }} service is started and enabled
+      service:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+
+      with_items:
+        - "{{firewall_service}}"
+        - "{{web_service}}"
+
+    - name: Web content is in place
+      copy:
+        content: "Example web content"
+        dest: /var/www/html/index.html
+
+    - name: The firewall port for {{ rule }} is open
+      firewalld:
+        service: "{{rule}}"
+        permanent: true
+        immediate: true
+        state: enabled
+
+- name: Verify the apache service
+  hosts: localhost
+  become: False
+  tasks:
+    - name: Ensure the webserver is reachable
+      uri:
+        url: http://servera.lab.example.com
+        status_code: 200
+
