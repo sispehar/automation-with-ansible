@@ -1,0 +1,57 @@
+---
+- name: Upgrading servers
+  hosts: webservers
+  remote_user: devops
+  become: true
+
+  tasks:
+    - name: remove webserver from LB
+      haproxy:
+        state: disabled
+        host: "{{inventory_hostname}}"
+        socket: /var/lib/haproxy/stats
+        backend: app
+        wait: yes
+      delegate_to: "{{item}}"
+      with_items: "{{groups.lbserver}}"
+
+    - name: copy updated webpage
+      template:
+        src: templates/index-ver1.html.j2
+        dest: /var/www/html/index.html
+      register: pageupgrade
+
+    - name: restart web server
+      command: shutdown -r +1 "ansible updates triggered"
+      async: 1
+      poll: 0
+      ignore_errors: true
+      when: pageupgrade.changed
+
+    - name: wait for reboot
+      wait_for:
+        host: "{{inventory_hostname}}"
+        state: started
+        delay: 80
+        timeout: 200
+      delegate_to: localhost
+      become: false
+      when: pageupgrade.changed
+
+    - name: wait for http
+      wait_for:
+        host: "{{inventory_hostname}}"
+        port: 80
+        state: started
+        timeout: 20
+
+    - name: add back to LB
+      haproxy:
+        state: enabled
+        backend: app
+        host: "{{inventory_hostname}}"
+        socket: /var/lib/haproxy/stats
+        wait: yes
+      delegate_to: "{{item}}"
+      with_items: "{{groups.lbserver}}"
+

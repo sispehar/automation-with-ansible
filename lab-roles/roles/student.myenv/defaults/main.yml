@@ -1,0 +1,8 @@
+---
+myenv_packages:
+  - git
+  - tree
+  - vim-enhanced
+
+myenv_user: ''
+

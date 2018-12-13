@@ -1,0 +1,45 @@
+---
+- name: Install httpd and firewalld packages
+  yum:
+    name:
+      - httpd
+      - firewalld
+    state: latest
+
+- name: Copy template
+  template:
+    src: apache_httpdconf.j2
+    dest: /etc/httpd/conf/httpd.conf
+    owner: root
+    group: root
+    mode: 0444
+  notify:
+    - restart_httpd
+  when: apache_enable
+
+- name: Copy 2nd template
+  template:
+    src: apache_indexhtml.j2
+    dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: 0444
+  when: apache_enable
+
+- name: start and enable services
+  service:
+    name: "{{item}}"
+    enabled: true
+    state: started
+  with_items:
+    - httpd
+    - firewalld
+  when: apache_enable
+
+- name: open port 80 on firewall
+  firewalld:
+    port: 80/tcp
+    state: enabled
+    permanent: true
+    immediate: true
+  when: apache_enable

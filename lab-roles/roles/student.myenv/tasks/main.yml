@@ -1,0 +1,29 @@
+---
+
+- name: fail when no user
+  fail:
+    msg: Specify myenv_user for this role to work!
+  when: "myenv_user == ''"
+
+- name: install {{myenv_packages}} packages
+  yum:
+    name: "{{myenv_packages}}"
+    state: latest
+
+- name: copy profile pic
+  copy:
+     src: /usr/share/icons/hicolor/48x48/apps/system-logo-icon.png
+     dest: /home/{{myenv_user}}/profile.png
+
+- name: template vhost file
+  template:
+      src: mkcd.sh.j2
+      dest: /etc/profile.d/mkcd.sh
+      owner: root
+      group: root
+      mode: 0644
+
+- name: add tree to bashrc
+  lineinfile:
+    path: /home/{{myenv_user}}/.bashrc
+    line: "alias tree='tree -C'"

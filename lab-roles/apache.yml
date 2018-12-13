@@ -1,0 +1,6 @@
+---
+- name: run apache role
+  hosts: serverb.lab.example.com
+  roles:
+    - role: myapache
+      apache_enable: true
